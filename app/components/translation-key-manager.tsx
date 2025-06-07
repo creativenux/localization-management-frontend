@@ -4,7 +4,7 @@ import { useLanguageStore } from '../store/language-store';
 import { useCategoryStore } from '../store/category-store';
 import { useTranslations, useUpdateTranslation } from '../services/translation-service';
 import CreateTranslationModal from './create-translation-modal';
-import { Plus } from 'lucide-react';
+import { Plus, Loader2, Search } from 'lucide-react';
 
 const TranslationKeyManager = () => {
     const { activeProject } = useProjectStore();
@@ -16,14 +16,25 @@ const TranslationKeyManager = () => {
     } | null>(null);
     const [editValue, setEditValue] = useState("");
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    const [searchQuery, setSearchQuery] = useState("");
 
     const { data: translationKeys = [], isLoading } = useTranslations(activeProject?.id || '');
     const updateTranslationMutation = useUpdateTranslation(activeProject?.id || '');
 
-    // Filter translation keys based on active category
-    const filteredTranslationKeys = translationKeys.filter(key => 
-        activeCategory === 'all' || key.category === activeCategory
-    );
+    // Filter translation keys based on active category and search query
+    const filteredTranslationKeys = translationKeys.filter(key => {
+        const matchesCategory = activeCategory === 'all' || key.category === activeCategory;
+        const searchLower = searchQuery.toLowerCase();
+        
+        const matchesSearch = searchQuery === "" || 
+            key.key.toLowerCase().includes(searchLower) ||
+            (key.description?.toLowerCase().includes(searchLower) ?? false) ||
+            Object.values(key.translations).some(translation => 
+                translation.value.toLowerCase().includes(searchLower)
+            );
+
+        return matchesCategory && matchesSearch;
+    });
 
     const handleEdit = (keyId: number, languageCode: string, currentValue: string) => {
         setEditingCell({ keyId, languageCode });
@@ -46,12 +57,17 @@ const TranslationKeyManager = () => {
             }
         };
 
-        updateTranslationMutation.mutate({
-            localization_id: editingCell.keyId,
-            translations: updatedTranslations
-        });
-
-        setEditingCell(null);
+        updateTranslationMutation.mutate(
+            {
+                localization_id: editingCell.keyId,
+                translations: updatedTranslations
+            },
+            {
+                onSuccess: () => {
+                    setEditingCell(null);
+                }
+            }
+        );
     };
 
     const handleCancel = () => {
@@ -87,12 +103,21 @@ const TranslationKeyManager = () => {
             {/* Toolbar Area */}
             <div className="bg-white dark:bg-stone-800 shadow rounded-lg p-4 flex items-center justify-between min-h-[60px]">
                 <div className="w-full flex items-center justify-between">
-                    <div className="p-3 border border-dashed border-stone-300 dark:border-stone-600 rounded bg-stone-50 dark:bg-stone-700 text-sm text-stone-500 dark:text-stone-400">
-                        [Search]
+                    <div className="relative flex-1 max-w-md">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <Search className="h-4 w-4 text-stone-400" />
+                        </div>
+                        <input
+                            type="text"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            placeholder="Search by key, description or value..."
+                            className="w-full pl-10 pr-4 py-2 border border-stone-300 dark:border-stone-600 rounded-md bg-stone-50 dark:bg-stone-700 text-sm text-stone-900 dark:text-stone-100 placeholder-stone-500 dark:placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        />
                     </div>
                     <button
                         onClick={() => setIsCreateModalOpen(true)}
-                        className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                        className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ml-4"
                     >
                         <Plus className="w-4 h-4" />
                         Add Translation
@@ -131,19 +156,28 @@ const TranslationKeyManager = () => {
                                                         value={editValue}
                                                         onChange={(e) => setEditValue(e.target.value)}
                                                         className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                                        disabled={updateTranslationMutation.isPending}
                                                     />
-                                                    <button
-                                                        onClick={handleSave}
-                                                        className="p-2 text-green-600 hover:text-green-800 focus:outline-none"
-                                                    >
-                                                        ✓
-                                                    </button>
-                                                    <button
-                                                        onClick={handleCancel}
-                                                        className="p-2 text-red-600 hover:text-red-800 focus:outline-none"
-                                                    >
-                                                        ✕
-                                                    </button>
+                                                    <div className="flex items-center gap-1">
+                                                        <button
+                                                            onClick={handleSave}
+                                                            className="p-2 text-green-600 hover:text-green-800 focus:outline-none disabled:opacity-50"
+                                                            disabled={updateTranslationMutation.isPending}
+                                                        >
+                                                            {updateTranslationMutation.isPending ? (
+                                                                <Loader2 className="w-4 h-4 animate-spin" />
+                                                            ) : (
+                                                                "✓"
+                                                            )}
+                                                        </button>
+                                                        <button
+                                                            onClick={handleCancel}
+                                                            className="p-2 text-red-600 hover:text-red-800 focus:outline-none disabled:opacity-50"
+                                                            disabled={updateTranslationMutation.isPending}
+                                                        >
+                                                            ✕
+                                                        </button>
+                                                    </div>
                                                 </div>
                                             :
                                                 <div className="flex items-center gap-2">
