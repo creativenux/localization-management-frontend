@@ -98,6 +98,37 @@ const createTranslation = async (
     }
 };
 
+const updateBatchTranslations = async (
+    projectId: string,
+    localizations: {
+        id: number;
+        translations: {
+            [key: string]: {
+                value: string;
+                updated_at: string;
+                updated_by: string;
+            }
+        }
+    }[]
+): Promise<void> => {
+    try {
+        const response = await fetch(`${BASE_URL}/localizations/${projectId}/batch`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ localizations }),
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to update batch translations');
+        }
+    } catch (error) {
+        console.error('Error updating batch translations:', error);
+        throw error;
+    }
+};
+
 // React Query hooks
 export const useTranslations = (projectId: string) => {
     return useQuery({
@@ -151,6 +182,26 @@ export const useCreateTranslation = (projectId: string) => {
                 }
             }
         }) => createTranslation(projectId, data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['translations', projectId] });
+        },
+    });
+};
+
+export const useUpdateBatchTranslations = (projectId: string) => {
+    const queryClient = useQueryClient();
+    
+    return useMutation({
+        mutationFn: (localizations: {
+            id: number;
+            translations: {
+                [key: string]: {
+                    value: string;
+                    updated_at: string;
+                    updated_by: string;
+                }
+            }
+        }[]) => updateBatchTranslations(projectId, localizations),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['translations', projectId] });
         },

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useProjectStore } from '../store/project-store';
 import { useLanguageStore } from '../store/language-store';
 import { useCategoryStore } from '../store/category-store';
-import { useTranslations, useUpdateTranslation } from '../services/translation-service';
+import { useTranslations, useUpdateTranslation, useUpdateBatchTranslations } from '../services/translation-service';
 import CreateTranslationModal from './create-translation-modal';
 import { Plus, Loader2, Search } from 'lucide-react';
 
@@ -17,9 +17,13 @@ const TranslationKeyManager = () => {
     const [editValue, setEditValue] = useState("");
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
+    const [selectedKeys, setSelectedKeys] = useState<number[]>([]);
+    const [bulkEditValues, setBulkEditValues] = useState<{ [key: number]: string }>({});
+    const [isBulkEditing, setIsBulkEditing] = useState(false);
 
     const { data: translationKeys = [], isLoading } = useTranslations(activeProject?.id || '');
     const updateTranslationMutation = useUpdateTranslation(activeProject?.id || '');
+    const updateBatchTranslationMutation = useUpdateBatchTranslations(activeProject?.id || '');
 
     // Filter translation keys based on active category and search query
     const filteredTranslationKeys = translationKeys.filter(key => {
@@ -74,6 +78,84 @@ const TranslationKeyManager = () => {
         setEditingCell(null);
     };
 
+    const handleSelectAll = (checked: boolean) => {
+        if (checked) {
+            setSelectedKeys(filteredTranslationKeys.map(key => key.id));
+        } else {
+            setSelectedKeys([]);
+        }
+    };
+
+    const handleSelectKey = (keyId: number, checked: boolean) => {
+        if (checked) {
+            setSelectedKeys([...selectedKeys, keyId]);
+        } else {
+            setSelectedKeys(selectedKeys.filter(id => id !== keyId));
+        }
+    };
+
+    const handleBulkEdit = () => {
+        if (selectedKeys.length === 0) return;
+        setIsBulkEditing(true);
+        // Initialize bulk edit values with current values
+        const initialValues: { [key: number]: string } = {};
+        selectedKeys.forEach(keyId => {
+            const keyData = translationKeys.find(key => key.id === keyId);
+            if (keyData && activeLanguage) {
+                initialValues[keyId] = keyData.translations[activeLanguage.code]?.value || '';
+            }
+        });
+        setBulkEditValues(initialValues);
+    };
+
+    const handleBulkSave = () => {
+        if (!activeProject || !activeLanguage || selectedKeys.length === 0) return;
+
+        const localizations = selectedKeys
+            .map(keyId => {
+                const keyData = translationKeys.find(key => key.id === keyId);
+                if (!keyData) return null;
+
+                // Preserve all existing translations
+                const updatedTranslations = {
+                    ...keyData.translations,
+                    [activeLanguage.code]: {
+                        value: bulkEditValues[keyId] || '',
+                        updated_at: new Date().toISOString(),
+                        updated_by: "user"
+                    }
+                };
+
+                return {
+                    id: keyId,
+                    translations: updatedTranslations
+                };
+            })
+            .filter((item): item is {
+                id: number;
+                translations: {
+                    [key: string]: {
+                        value: string;
+                        updated_at: string;
+                        updated_by: string;
+                    }
+                }
+            } => item !== null);
+
+        updateBatchTranslationMutation.mutate(localizations, {
+            onSuccess: () => {
+                setIsBulkEditing(false);
+                setSelectedKeys([]);
+                setBulkEditValues({});
+            }
+        });
+    };
+
+    const handleBulkCancel = () => {
+        setIsBulkEditing(false);
+        setBulkEditValues({});
+    };
+
     if (!activeProject) {
         return (
             <div className="w-full flex items-center justify-center p-8 text-stone-500">
@@ -115,15 +197,76 @@ const TranslationKeyManager = () => {
                             className="w-full pl-10 pr-4 py-2 border border-stone-300 dark:border-stone-600 rounded-md bg-stone-50 dark:bg-stone-700 text-sm text-stone-900 dark:text-stone-100 placeholder-stone-500 dark:placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         />
                     </div>
-                    <button
-                        onClick={() => setIsCreateModalOpen(true)}
-                        className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ml-4"
-                    >
-                        <Plus className="w-4 h-4" />
-                        Add Translation
-                    </button>
+                    <div className="flex items-center gap-2">
+                        {selectedKeys.length > 0 && !isBulkEditing && (
+                            <button
+                                onClick={handleBulkEdit}
+                                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                            >
+                                Edit Selected ({selectedKeys.length})
+                            </button>
+                        )}
+                        <button
+                            onClick={() => setIsCreateModalOpen(true)}
+                            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                        >
+                            <Plus className="w-4 h-4" />
+                            Add Translation
+                        </button>
+                    </div>
                 </div>
             </div>
+
+            {/* Bulk Edit Area */}
+            {isBulkEditing && (
+                <div className="bg-white dark:bg-stone-800 shadow rounded-lg p-4">
+                    <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium text-stone-700 dark:text-stone-300">
+                                Editing {selectedKeys.length} items
+                            </span>
+                            <div className="flex items-center gap-2">
+                                <button
+                                    onClick={handleBulkSave}
+                                    disabled={updateBatchTranslationMutation.isPending}
+                                    className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+                                >
+                                    {updateBatchTranslationMutation.isPending ? 'Saving...' : 'Save All'}
+                                </button>
+                                <button
+                                    onClick={handleBulkCancel}
+                                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                                >
+                                    Cancel
+                                </button>
+                            </div>
+                        </div>
+                        <div className="space-y-2">
+                            {selectedKeys.map(keyId => {
+                                const keyData = translationKeys.find(key => key.id === keyId);
+                                if (!keyData) return null;
+                                
+                                return (
+                                    <div key={keyId} className="flex items-center gap-4">
+                                        <span className="w-1/3 text-sm text-gray-600">{keyData.key}</span>
+                                        <input
+                                            type="text"
+                                            value={bulkEditValues[keyId] || ''}
+                                            onChange={(e) => setBulkEditValues(prev => ({
+                                                ...prev,
+                                                [keyId]: e.target.value
+                                            }))}
+                                            placeholder={`Enter value for ${keyData.key}`}
+                                            className="flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                        />
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Translation Keys List / Editor Area */}
             <section className="flex-grow bg-white dark:bg-stone-800 shadow rounded-lg p-4 lg:p-6">
                 <h2 className="text-xl font-semibold mb-4 text-stone-700 dark:text-stone-300">
@@ -134,6 +277,14 @@ const TranslationKeyManager = () => {
                         <table className="min-w-full divide-y divide-gray-200">
                             <thead className="bg-gray-50">
                                 <tr>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        <input
+                                            type="checkbox"
+                                            checked={selectedKeys.length === filteredTranslationKeys.length}
+                                            onChange={(e) => handleSelectAll(e.target.checked)}
+                                            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                        />
+                                    </th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Key</th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
@@ -145,6 +296,14 @@ const TranslationKeyManager = () => {
                             <tbody className="bg-white divide-y divide-gray-200">
                                 {filteredTranslationKeys.map((key) => (
                                     <tr key={key.id} className="hover:bg-gray-50">
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <input
+                                                type="checkbox"
+                                                checked={selectedKeys.includes(key.id)}
+                                                onChange={(e) => handleSelectKey(key.id, e.target.checked)}
+                                                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                            />
+                                        </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{key.key}</td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{key.category}</td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{key.description}</td>
