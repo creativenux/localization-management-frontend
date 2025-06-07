@@ -84,7 +84,7 @@ pnpm dev
 
 ## 🌐 Live Demo
 
-[Deploy Link] coming soon...
+[https://localization-management-frontend.vercel.app/](https://localization-management-frontend.vercel.app/)
 
 ## ⏱️ Project Timeline
 
