@@ -62,7 +62,7 @@ export default function ProjectSelector() {
                             <input
                                 type="text"
                                 placeholder="Project name"
-                                className="w-full p-1 text-sm border rounded"
+                                className="w-full p-1 text-sm border rounded bg-white dark:bg-stone-700 border-stone-300 dark:border-stone-600 text-stone-900 dark:text-stone-100 placeholder-stone-500 dark:placeholder-stone-400"
                                 value={newProject.name}
                                 onChange={(e) => setNewProject({ ...newProject, name: e.target.value })}
                             />
@@ -70,13 +70,13 @@ export default function ProjectSelector() {
                                 <button
                                     onClick={handleAddProject}
                                     disabled={createProjectMutation.isPending}
-                                    className="px-3 py-1 text-sm text-white bg-blue-500 rounded hover:bg-blue-600 disabled:opacity-50"
+                                    className="px-3 py-1 text-sm text-white bg-blue-500 rounded hover:bg-blue-600 disabled:opacity-50 dark:bg-blue-600 dark:hover:bg-blue-700"
                                 >
                                     {createProjectMutation.isPending ? 'Adding...' : 'Add'}
                                 </button>
                                 <button
                                     onClick={() => setIsAddingNew(false)}
-                                    className="px-3 py-1 text-sm text-gray-600 bg-gray-100 rounded hover:bg-gray-200"
+                                    className="px-3 py-1 text-sm text-stone-700 dark:text-stone-300 bg-stone-100 dark:bg-stone-700 rounded hover:bg-stone-200 dark:hover:bg-stone-600"
                                 >
                                     Cancel
                                 </button>
@@ -87,7 +87,7 @@ export default function ProjectSelector() {
                     <li>
                         <button
                             onClick={() => setIsAddingNew(true)}
-                            className="flex items-center gap-2 p-2 text-sm text-gray-600 hover:text-gray-900"
+                            className="flex items-center gap-2 p-2 text-sm text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-200"
                         >
                             <Plus className="w-4 h-4" />
                             Add new project

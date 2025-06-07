@@ -274,53 +274,53 @@ const TranslationKeyManager = () => {
                 </h2>
                 <div className="container mx-auto py-6">
                     <div className="overflow-x-auto">
-                        <table className="min-w-full divide-y divide-gray-200">
-                            <thead className="bg-gray-50">
+                        <table className="min-w-full divide-y divide-stone-200 dark:divide-stone-700">
+                            <thead className="bg-stone-50 dark:bg-stone-800">
                                 <tr>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-stone-500 dark:text-stone-400 uppercase tracking-wider">
                                         <input
                                             type="checkbox"
                                             checked={selectedKeys.length === filteredTranslationKeys.length}
                                             onChange={(e) => handleSelectAll(e.target.checked)}
-                                            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                            className="rounded border-stone-300 dark:border-stone-600 text-blue-600 focus:ring-blue-500 bg-white dark:bg-stone-700"
                                         />
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Key</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-stone-500 dark:text-stone-400 uppercase tracking-wider">Key</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-stone-500 dark:text-stone-400 uppercase tracking-wider">Category</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-stone-500 dark:text-stone-400 uppercase tracking-wider">Description</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-stone-500 dark:text-stone-400 uppercase tracking-wider">
                                         {activeLanguage.code.toUpperCase()}
                                     </th>
                                 </tr>
                             </thead>
-                            <tbody className="bg-white divide-y divide-gray-200">
+                            <tbody className="bg-white dark:bg-stone-800 divide-y divide-stone-200 dark:divide-stone-700">
                                 {filteredTranslationKeys.map((key) => (
-                                    <tr key={key.id} className="hover:bg-gray-50">
+                                    <tr key={key.id} className="hover:bg-stone-50 dark:hover:bg-stone-700">
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <input
                                                 type="checkbox"
                                                 checked={selectedKeys.includes(key.id)}
                                                 onChange={(e) => handleSelectKey(key.id, e.target.checked)}
-                                                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                                className="rounded border-stone-300 dark:border-stone-600 text-blue-600 focus:ring-blue-500 bg-white dark:bg-stone-700"
                                             />
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{key.key}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{key.category}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{key.description}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-stone-900 dark:text-stone-100">{key.key}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-stone-900 dark:text-stone-100">{key.category}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-stone-900 dark:text-stone-100">{key.description}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-stone-900 dark:text-stone-100">
                                             {editingCell?.keyId === key.id && editingCell?.languageCode === activeLanguage.code ?
                                                 <div className="flex items-center gap-2">
                                                     <input
                                                         type="text"
                                                         value={editValue}
                                                         onChange={(e) => setEditValue(e.target.value)}
-                                                        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                                        className="w-full px-3 py-2 border border-stone-300 dark:border-stone-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-stone-700 text-stone-900 dark:text-stone-100"
                                                         disabled={updateTranslationMutation.isPending}
                                                     />
                                                     <div className="flex items-center gap-1">
                                                         <button
                                                             onClick={handleSave}
-                                                            className="p-2 text-green-600 hover:text-green-800 focus:outline-none disabled:opacity-50"
+                                                            className="p-2 text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300 focus:outline-none disabled:opacity-50"
                                                             disabled={updateTranslationMutation.isPending}
                                                         >
                                                             {updateTranslationMutation.isPending ? (
@@ -331,7 +331,7 @@ const TranslationKeyManager = () => {
                                                         </button>
                                                         <button
                                                             onClick={handleCancel}
-                                                            className="p-2 text-red-600 hover:text-red-800 focus:outline-none disabled:opacity-50"
+                                                            className="p-2 text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 focus:outline-none disabled:opacity-50"
                                                             disabled={updateTranslationMutation.isPending}
                                                         >
                                                             ✕
@@ -343,7 +343,7 @@ const TranslationKeyManager = () => {
                                                     <span>{key.translations[activeLanguage.code]?.value}</span>
                                                     <button
                                                         onClick={() => handleEdit(key.id, activeLanguage.code, key.translations[activeLanguage.code]?.value || "")}
-                                                        className="p-2 text-gray-600 hover:text-gray-800 focus:outline-none"
+                                                        className="p-2 text-stone-600 dark:text-stone-400 hover:text-stone-800 dark:hover:text-stone-200 focus:outline-none"
                                                     >
                                                         ✎
                                                     </button>
