@@ -3,6 +3,8 @@ import { useProjectStore } from '../store/project-store';
 import { useLanguageStore } from '../store/language-store';
 import { useCategoryStore } from '../store/category-store';
 import { useTranslations, useUpdateTranslation } from '../services/translation-service';
+import CreateTranslationModal from './create-translation-modal';
+import { Plus } from 'lucide-react';
 
 const TranslationKeyManager = () => {
     const { activeProject } = useProjectStore();
@@ -13,6 +15,7 @@ const TranslationKeyManager = () => {
         languageCode: string;
     } | null>(null);
     const [editValue, setEditValue] = useState("");
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
     const { data: translationKeys = [], isLoading } = useTranslations(activeProject?.id || '');
     const updateTranslationMutation = useUpdateTranslation(activeProject?.id || '');
@@ -83,8 +86,17 @@ const TranslationKeyManager = () => {
         <main className="w-full flex flex-col space-y-6">
             {/* Toolbar Area */}
             <div className="bg-white dark:bg-stone-800 shadow rounded-lg p-4 flex items-center justify-between min-h-[60px]">
-                <div className="w-full p-3 border border-dashed border-stone-300 dark:border-stone-600 rounded bg-stone-50 dark:bg-stone-700 text-sm text-stone-500 dark:text-stone-400 flex items-center justify-center">
-                    [Toolbar: Search, Actions]
+                <div className="w-full flex items-center justify-between">
+                    <div className="p-3 border border-dashed border-stone-300 dark:border-stone-600 rounded bg-stone-50 dark:bg-stone-700 text-sm text-stone-500 dark:text-stone-400">
+                        [Search]
+                    </div>
+                    <button
+                        onClick={() => setIsCreateModalOpen(true)}
+                        className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    >
+                        <Plus className="w-4 h-4" />
+                        Add Translation
+                    </button>
                 </div>
             </div>
             {/* Translation Keys List / Editor Area */}
@@ -152,6 +164,10 @@ const TranslationKeyManager = () => {
                     </div>
                 </div>
             </section>
+            <CreateTranslationModal
+                isOpen={isCreateModalOpen}
+                onClose={() => setIsCreateModalOpen(false)}
+            />
         </main>
     );
 };

@@ -65,6 +65,39 @@ const updateTranslation = async (
     }
 };
 
+const createTranslation = async (
+    projectId: string,
+    data: {
+        key: string;
+        category: string;
+        description?: string;
+        translations: {
+            [languageCode: string]: {
+                value: string;
+            }
+        }
+    }
+): Promise<TranslationKey> => {
+    try {
+        const response = await fetch(`${BASE_URL}/localizations/${projectId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data),
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to create translation');
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error('Error creating translation:', error);
+        throw error;
+    }
+};
+
 // React Query hooks
 export const useTranslations = (projectId: string) => {
     return useQuery({
@@ -95,6 +128,26 @@ export const useUpdateTranslation = (projectId: string) => {
             localization_id,
             translations
         ),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['translations', projectId] });
+        },
+    });
+};
+
+export const useCreateTranslation = (projectId: string) => {
+    const queryClient = useQueryClient();
+    
+    return useMutation({
+        mutationFn: (data: {
+            key: string;
+            category: string;
+            description?: string;
+            translations: {
+                [languageCode: string]: {
+                    value: string;
+                }
+            }
+        }) => createTranslation(projectId, data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['translations', projectId] });
         },
