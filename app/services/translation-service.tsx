@@ -104,6 +104,9 @@ export const useTranslations = (projectId: string) => {
         queryKey: ['translations', projectId],
         queryFn: () => getTranslations(projectId),
         enabled: !!projectId,
+        refetchOnWindowFocus: false,
+        refetchOnMount: true,
+        refetchOnReconnect: false,
     });
 };
 

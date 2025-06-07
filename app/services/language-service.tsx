@@ -46,6 +46,10 @@ export const useLanguages = () => {
     return useQuery({
         queryKey: ['languages'],
         queryFn: getLanguages,
+        refetchOnWindowFocus: false,
+        refetchOnMount: true,
+        refetchOnReconnect: false,
+        // staleTime: Infinity
     });
 };
 

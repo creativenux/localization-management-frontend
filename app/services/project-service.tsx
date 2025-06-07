@@ -46,6 +46,10 @@ export const useProjects = () => {
     return useQuery({
         queryKey: ['projects'],
         queryFn: getProjects,
+        refetchOnWindowFocus: false,
+        refetchOnMount: true,
+        refetchOnReconnect: false,
+        // staleTime: Infinity
     });
 };
 
